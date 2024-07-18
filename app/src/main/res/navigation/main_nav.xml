@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_nav"
+    app:startDestination="@id/countryFragment">
+
+    <fragment
+        android:id="@+id/countryFragment"
+        android:name="com.example.practicesoft.ui.CountryFragment"
+        android:label="fragment_country"
+        tools:layout="@layout/fragment_country" >
+        <action
+            android:id="@+id/action_countryFragment_to_villageFragment"
+            app:destination="@id/villageFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/villageFragment"
+        android:name="com.example.practicesoft.ui.VillageFragment"
+        android:label="fragment_village"
+        tools:layout="@layout/fragment_village" >
+        <argument
+            android:name="city"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_villageFragment_to_museumFragment"
+            app:destination="@id/museumFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/museumFragment"
+        android:name="com.example.practicesoft.ui.MuseumFragment"
+        android:label="fragment_museum"
+        tools:layout="@layout/fragment_museum" >
+        <argument
+            android:name="village"
+            app:argType="string" />
+        <argument
+            android:name="city"
+            app:argType="string" />
+    </fragment>
+</navigation>
