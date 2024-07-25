@@ -11,6 +11,7 @@ import com.example.practicesoft.api.NetworkResponse
 import com.example.practicesoft.model.Country
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -19,24 +20,37 @@ import javax.inject.Inject
 class CountryViewModel @Inject constructor(
     private val repository: MuseumRepository
 ) : ViewModel() {
-    val cityList = MutableLiveData<List<Country>>()
-    val isLoading = MutableLiveData<Boolean>()
+
+    val uiState = MutableLiveData<CityUiState>()
+
 
     fun getCountries() {
-        isLoading.value = true
         viewModelScope.launch {
-            when (val response = repository.getCities()) {
-                is NetworkResponse.Success -> {
-                    response.data?.countries?.let {
-                        cityList.value = it
-                        isLoading.value = false
+            repository.getCities().collectLatest {
+                when (it) {
+                    is NetworkResponse.Loading -> {
+                        uiState.value = CityUiState.Loading
                     }
-                }
-                is NetworkResponse.Error -> {
-                    isLoading.value = false
+
+                    is NetworkResponse.Success -> {
+                        it.data?.countries?.let {
+                            uiState.value = CityUiState.CityList(it)
+                        }
+                    }
+
+                    is NetworkResponse.Error -> {
+                        it.message?.let {
+                            uiState.value = CityUiState.Error(it)
+                        }
+                    }
                 }
             }
         }
     }
 
+    sealed class CityUiState {
+        data class CityList(val cities: List<Country>) : CityUiState()
+        object Loading : CityUiState()
+        data class Error(val message: String = "") : CityUiState()
+    }
 }

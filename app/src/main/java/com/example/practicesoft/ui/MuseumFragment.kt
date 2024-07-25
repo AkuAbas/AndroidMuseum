@@ -1,11 +1,16 @@
 package com.example.practicesoft.ui
 
+import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.navArgs
 import com.example.practicesoft.databinding.FragmentMuseumBinding
+import com.example.practicesoft.gone
+import com.example.practicesoft.visible
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -21,15 +26,30 @@ class MuseumFragment : BaseFragment<FragmentMuseumBinding>(FragmentMuseumBinding
         viewModel.getMuseums(args.city, args.village)
     }
 
+    @SuppressLint("SetTextI18n")
     fun observeData() {
-        viewModel.museumList.observe(viewLifecycleOwner) {
-            museumAdapter.updateList(it)
-        }
-        viewModel.isLoading.observe(viewLifecycleOwner) {
-            binding.progressBar3.isVisible = it
-        }
-        viewModel.isEmpty.observe(viewLifecycleOwner){
-            binding.textViewNoMuseum.isVisible = it
+        viewModel.uiState.observe(viewLifecycleOwner) {
+            when (it) {
+                is MuseumViewModel.MuseumUiState.MuseumList -> {
+                    museumAdapter.updateList(it.museums)
+                    binding.progressBar3.gone()
+                }
+
+                is MuseumViewModel.MuseumUiState.Error -> {
+                    Toast.makeText(context, it.message, Toast.LENGTH_LONG).show()
+                    binding.progressBar3.gone()
+                }
+
+                is MuseumViewModel.MuseumUiState.Loading -> {
+                    binding.progressBar3.visible()
+                }
+
+                else -> {
+                    binding.textViewNoMuseum.visible()
+                    binding.progressBar3.gone()
+                }
+
+            }
         }
     }
 

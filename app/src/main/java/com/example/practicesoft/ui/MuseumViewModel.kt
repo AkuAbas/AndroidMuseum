@@ -11,6 +11,7 @@ import com.example.practicesoft.api.NetworkResponse
 import com.example.practicesoft.model.Museum
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -19,31 +20,39 @@ import javax.inject.Inject
 class MuseumViewModel @Inject constructor(
     private val repository: MuseumRepository
 ) : ViewModel() {
-    val museumList = MutableLiveData<List<Museum>>()
-    val isLoading = MutableLiveData<Boolean>()
-    val isEmpty = MutableLiveData<Boolean>()
+
+    val uiState = MutableLiveData<MuseumUiState>()
 
     fun getMuseums(city: String, village: String) {
-        isLoading.value = true
         viewModelScope.launch {
-            when (val response = repository.getMuseums(city, village)) {
-                is NetworkResponse.Success -> {
-                    response.data?.museums?.let {
-                        if (it.isNotEmpty()) {
-                            museumList.value = it
-                            isLoading.value = false
-                        } else {
-                            isEmpty.value = true
-                            isLoading.value = false
+            repository.getMuseums(city, village).collectLatest {
+                when (it) {
+                    is NetworkResponse.Loading -> uiState.value = MuseumUiState.Loading
+                    is NetworkResponse.Success -> {
+                        it.data?.museums?.let {
+                            if (it.isNotEmpty()) {
+                                uiState.value = MuseumUiState.MuseumList(it)
+                            } else {
+                                uiState.value = MuseumUiState.IsEmpty
+                            }
                         }
                     }
-                }
 
-                is NetworkResponse.Error -> {
-                    isLoading.value = false
+                    is NetworkResponse.Error -> {
+                        uiState.value = MuseumUiState.Error(it.message.toString())
+                    }
                 }
             }
+
         }
     }
+
+    sealed class MuseumUiState {
+        data class MuseumList(val museums: List<Museum>) : MuseumUiState()
+        data class Error(val message: String = "") : MuseumUiState()
+        object Loading : MuseumUiState()
+        object IsEmpty : MuseumUiState()
+    }
+
 
 }

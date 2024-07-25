@@ -1,10 +1,15 @@
 package com.example.practicesoft.di
 
 import android.content.Context
+import androidx.room.Room
+import androidx.room.RoomDatabase
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.example.practicesoft.Constants.BASE_URL
 import com.example.practicesoft.api.ApiKeyInterceptor
 import com.example.practicesoft.api.CountryService
+import com.example.practicesoft.local.Player
+import com.example.practicesoft.local.PlayerDAO
+import com.example.practicesoft.local.PlayerDataBase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -56,5 +61,17 @@ object AppModule {
         return Retrofit.Builder().baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create()).client(okHttpClient)
             .build().create(CountryService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun createRoom(@ApplicationContext context: Context): PlayerDataBase {
+        return Room.databaseBuilder(context, PlayerDataBase::class.java, "local_db").build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDAO(playerDataBase: PlayerDataBase): PlayerDAO {
+        return playerDataBase.getDao()
     }
 }
